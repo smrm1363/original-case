@@ -1,5 +1,6 @@
 package com.afkl.cases.df.fare;
 
+import com.afkl.cases.df.airPort.Location;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.io.Serializable;

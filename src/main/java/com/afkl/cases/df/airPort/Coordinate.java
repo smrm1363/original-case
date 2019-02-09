@@ -1,4 +1,4 @@
-package com.afkl.cases.df.fare;
+package com.afkl.cases.df.airPort;
 
 public class Coordinate {
     private Double latitude;

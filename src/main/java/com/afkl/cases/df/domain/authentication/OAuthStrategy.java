@@ -1,6 +1,7 @@
 package com.afkl.cases.df.domain.authentication;
 
 import com.afkl.cases.df.RestTemplateComponent;
+import com.afkl.cases.df.util.ServiceClientCall;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +16,9 @@ import org.springframework.web.client.RestTemplate;
 
 import java.nio.charset.Charset;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 @Component
 public class OAuthStrategy implements AuthenticationStrategy {
@@ -32,38 +36,19 @@ public class OAuthStrategy implements AuthenticationStrategy {
     @Value("${OAuth.path}")
     private String oAuthPath;
 
-    private final RestTemplateComponent restTemplateComponent;
+    private final ServiceClientCall serviceClientCall;
     private String token;
     private long tokenExpiresAt = 0l;
 
     @Autowired
-    public OAuthStrategy(RestTemplateComponent restTemplateComponent) {
-        this.restTemplateComponent = restTemplateComponent;
+    public OAuthStrategy(RestTemplateComponent restTemplateComponent, ServiceClientCall serviceClientCall) {
+        this.serviceClientCall = serviceClientCall;
     }
-
-    @Override
+        @Override
     public synchronized String getToken() {
         if(System.currentTimeMillis()>tokenExpiresAt)
         {
-//            OAuthDto oAuthDto = restTemplateComponent.getRestTemplate().postForObject()
 
-//            JSONObject tokenObject = Unirest.post(simpleTravelApiUrl + "/oauth/token")
-//                    .header("accept", "application/json")
-//                    .header("content-type", "application/x-www-form-urlencoded")
-//                    .basicAuth("travel-api-client", "psw")
-//                    .queryString("grant_type", "client_credentials")
-//                    .queryString("username", username)
-//                    .queryString("password", password).asJson().getBody().getObject();
-//
-//            token = tokenObject.get("access_token").toString();
-//            tokenExpiresAtMillis = System.currentTimeMillis() + tokenObject.getInt("expires_in") * 1000;
-//
-//            logger.debug("Auth token received " + token);
-
-            RestTemplate template = new RestTemplate();
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-            
             MultiValueMap<String, String> map = new LinkedMultiValueMap<String, String>();
             map.add("grant_type", "client_credentials");
             map.add("username", username);
@@ -71,15 +56,14 @@ public class OAuthStrategy implements AuthenticationStrategy {
             String auth = username + ":" + password;
             String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes(Charset.forName("US-ASCII")) );
             String authHeader = "Basic " + new String( encodedAuth );
-            headers.set("Authorization",authHeader);
-
-
-            HttpEntity<MultiValueMap<String, String>> requestEntity=
-                    new HttpEntity<MultiValueMap<String, String>>(map, headers);
-
+            Map<String ,String > headerMap = new HashMap<>();
+            headerMap.put("content-type","application/x-www-form-urlencoded");
+            headerMap.put("Authorization",authHeader);
             try{
-                OAuthDto response = template.postForObject(serverUrl+oAuthPath, requestEntity,  OAuthDto.class);
-                token = response.getTokenType()+" "+response.getAccessToken();
+                CompletableFuture<OAuthDto> oAuthDtoCompletableFuture =
+                        CompletableFuture.supplyAsync(() -> serviceClientCall.postRequest(serverUrl+oAuthPath,headerMap,map,OAuthDto.class));
+                OAuthDto response = oAuthDtoCompletableFuture.get();
+                token =response.getTokenType()+" "+response.getAccessToken();
                 tokenExpiresAt = response.getExpiresIn();
             }
             catch(Exception e){
@@ -90,7 +74,4 @@ public class OAuthStrategy implements AuthenticationStrategy {
         }
         return token;
     }
-
-//    protected getRestTempla
-//    protected Json getTockenJsonObject
 }

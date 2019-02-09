@@ -1,11 +1,13 @@
-package com.afkl.cases.df.fare;
+package com.afkl.cases.df.airPort;
 
-public class Location {
+import java.io.Serializable;
+
+public class Location implements Serializable {
     private String code;
     private String name;
     private String description;
-    Coordinate coordinate;
-    Location ParentObject;
+    private Coordinate coordinates;
+    private Location parent;
 
     public String getCode() {
         return code;
@@ -31,19 +33,19 @@ public class Location {
         this.description = description;
     }
 
-    public Coordinate getCoordinate() {
-        return coordinate;
+    public Coordinate getCoordinates() {
+        return coordinates;
     }
 
-    public void setCoordinate(Coordinate coordinate) {
-        this.coordinate = coordinate;
+    public void setCoordinates(Coordinate coordinates) {
+        this.coordinates = coordinates;
     }
 
-    public Location getParentObject() {
-        return ParentObject;
+    public Location getParent() {
+        return parent;
     }
 
-    public void setParentObject(Location parentObject) {
-        ParentObject = parentObject;
+    public void setParent(Location parent) {
+        this.parent = parent;
     }
 }
